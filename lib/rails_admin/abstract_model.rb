@@ -48,6 +48,8 @@ module RailsAdmin
       ancestors = model.ancestors.collect(&:to_s)
       if ancestors.include?('ActiveRecord::Base') && !model.abstract_class?
         initialize_active_record
+      elsif ancestors.include?('JsonApiClient::Resource')
+        initialize_jsonapi_client
       elsif ancestors.include?('Mongoid::Document')
         initialize_mongoid
       end
@@ -102,6 +104,12 @@ module RailsAdmin
       @adapter = :active_record
       require 'rails_admin/adapters/active_record'
       extend Adapters::ActiveRecord
+    end
+
+    def initialize_jsonapi_client
+      @adapter = :jsonapi_client
+      require 'rails_admin/adapters/jsonapi_client'
+      extend Adapters::JsonapiClient
     end
 
     def initialize_mongoid
