@@ -5,58 +5,7 @@ describe RailsAdmin::MainController, type: :controller do
   routes { RailsAdmin::Engine.routes }
 
   def get(action, params)
-    if Rails.version >= '5.0'
-      super action, params: params
-    else
-      super action, params
-    end
-  end
-
-  describe '#dashboard' do
-    before do
-      allow(controller).to receive(:render).and_return(true) # no rendering
-    end
-
-    it 'shows statistics by default' do
-      allow(RailsAdmin.config(Player).abstract_model).to receive(:count).and_return(0)
-      expect(RailsAdmin.config(Player).abstract_model).to receive(:count)
-      controller.dashboard
-    end
-
-    it 'does not show statistics if turned off' do
-      RailsAdmin.config do |c|
-        c.included_models = [Player]
-        c.actions do
-          dashboard do
-            statistics false
-          end
-          index # mandatory
-        end
-      end
-
-      expect(RailsAdmin.config(Player).abstract_model).not_to receive(:count)
-      controller.dashboard
-    end
-
-    it 'counts are different for same-named models in different modules' do
-      allow(RailsAdmin.config(User::Confirmed).abstract_model).to receive(:count).and_return(10)
-      allow(RailsAdmin.config(Comment::Confirmed).abstract_model).to receive(:count).and_return(0)
-
-      controller.dashboard
-      expect(controller.instance_variable_get('@count')['User::Confirmed']).to be 10
-      expect(controller.instance_variable_get('@count')['Comment::Confirmed']).to be 0
-    end
-
-    it 'most recent change dates are different for same-named models in different modules' do
-      user_create = 10.days.ago.to_date
-      comment_create = 20.days.ago.to_date
-      FactoryBot.create(:user_confirmed, created_at: user_create)
-      FactoryBot.create(:comment_confirmed, created_at: comment_create)
-
-      controller.dashboard
-      expect(controller.instance_variable_get('@most_recent_created')['User::Confirmed']).to eq user_create
-      expect(controller.instance_variable_get('@most_recent_created')['Comment::Confirmed']).to eq comment_create
-    end
+    super action, params: params
   end
 
   describe '#check_for_cancel' do
@@ -185,7 +134,7 @@ describe RailsAdmin::MainController, type: :controller do
     end
 
     it 'scopes associated collection records according to bindings' do
-      @team.revenue = BigDecimal.new('3')
+      @team.revenue = BigDecimal('3')
       @team.save
 
       @players = FactoryBot.create_list(:player, 5)
@@ -392,6 +341,9 @@ describe RailsAdmin::MainController, type: :controller do
         field :active_storage_assets do
           delete_method :remove_active_storage_assets
         end if defined?(ActiveStorage)
+        field :shrine_asset do
+          delete_method :remove_shrine_asset
+        end if defined?(Shrine)
       end
       controller.params = HashWithIndifferentAccess.new(
         'field_test' => {
@@ -408,7 +360,8 @@ describe RailsAdmin::MainController, type: :controller do
           'delete_paperclip_asset' => 'test',
           'should_not_be_here' => 'test',
         }.merge(defined?(Refile) ? {'refile_asset' => 'test', 'remove_refile_asset' => 'test'} : {}).
-          merge(defined?(ActiveStorage) ? {'active_storage_asset' => 'test', 'remove_active_storage_asset' => 'test', 'active_storage_assets' => 'test', 'remove_active_storage_assets' => 'test'} : {}),
+          merge(defined?(ActiveStorage) ? {'active_storage_asset' => 'test', 'remove_active_storage_asset' => 'test', 'active_storage_assets' => 'test', 'remove_active_storage_assets' => 'test'} : {}).
+          merge(defined?(Shrine) ? {'shrine_asset' => 'test', 'remove_shrine_asset' => 'test'} : {}),
       )
 
       controller.send(:sanitize_params_for!, :create, RailsAdmin.config(FieldTest), controller.params['field_test'])
@@ -425,7 +378,8 @@ describe RailsAdmin::MainController, type: :controller do
         'paperclip_asset' => 'test',
         'delete_paperclip_asset' => 'test',
       }.merge(defined?(Refile) ? {'refile_asset' => 'test', 'remove_refile_asset' => 'test'} : {}).
-        merge(defined?(ActiveStorage) ? {'active_storage_asset' => 'test', 'remove_active_storage_asset' => 'test', 'active_storage_assets' => 'test', 'remove_active_storage_assets' => 'test'} : {}))
+        merge(defined?(ActiveStorage) ? {'active_storage_asset' => 'test', 'remove_active_storage_asset' => 'test', 'active_storage_assets' => 'test', 'remove_active_storage_assets' => 'test'} : {}).
+        merge(defined?(Shrine) ? {'shrine_asset' => 'test', 'remove_shrine_asset' => 'test'} : {}))
     end
 
     it 'allows for polymorphic associations parameters' do

@@ -11,11 +11,7 @@ describe 'RailsAdmin::Adapters::ActiveRecord', active_record: true do
   end
 
   def predicates_for(scope)
-    if scope.respond_to?(:where_values)
-      scope.where_values
-    else
-      scope.where_clause.instance_variable_get(:@predicates)
-    end
+    scope.where_clause.instance_variable_get(:@predicates)
   end
 
   describe '#associations' do
@@ -29,6 +25,12 @@ describe 'RailsAdmin::Adapters::ActiveRecord', active_record: true do
     it 'returns Property class' do
       expect(RailsAdmin::AbstractModel.new(Player).properties.first).
         to be_a_kind_of RailsAdmin::Adapters::ActiveRecord::Property
+    end
+  end
+
+  describe '#base_class' do
+    it 'returns inheritance base class' do
+      expect(RailsAdmin::AbstractModel.new(Hardball).base_class).to eq Ball
     end
   end
 
@@ -132,7 +134,7 @@ describe 'RailsAdmin::Adapters::ActiveRecord', active_record: true do
     end
   end
 
-  describe '#query_conditions' do
+  describe '#query_scope' do
     let(:abstract_model) { RailsAdmin::AbstractModel.new('Team') }
 
     before do
@@ -157,9 +159,27 @@ describe 'RailsAdmin::Adapters::ActiveRecord', active_record: true do
         expect { abstract_model.all(query: 'foo') }.not_to raise_error
       end
     end
+
+    context 'when parsing is not idempotent' do
+      before do
+        RailsAdmin.config do |c|
+          c.model Team do
+            field :name do
+              def parse_value(value)
+                "#{value}s"
+              end
+            end
+          end
+        end
+      end
+
+      it 'parses value only once' do
+        expect(abstract_model.all(query: 'foo')).to match_array @teams[1]
+      end
+    end
   end
 
-  describe '#filter_conditions' do
+  describe '#filter_scope' do
     let(:abstract_model) { RailsAdmin::AbstractModel.new('Team') }
 
     before do
@@ -184,6 +204,24 @@ describe 'RailsAdmin::Adapters::ActiveRecord', active_record: true do
 
     it 'makes correct query' do
       expect(abstract_model.all(filters: {'name' => {'0000' => {o: 'like', v: 'foo'}}, 'division' => {'0001' => {o: 'like', v: 'bar'}}}, include: :division)).to eq([@teams[2]])
+    end
+
+    context 'when parsing is not idempotent' do
+      before do
+        RailsAdmin.config do |c|
+          c.model Team do
+            field :name do
+              def parse_value(value)
+                "some#{value}"
+              end
+            end
+          end
+        end
+      end
+
+      it 'parses value only once' do
+        expect(abstract_model.all(filters: {'name' => {'0000' => {o: 'like', v: 'where'}}})).to match_array @teams[2]
+      end
     end
   end
 
@@ -464,7 +502,7 @@ describe 'RailsAdmin::Adapters::ActiveRecord', active_record: true do
       it 'supports string enum type query' do
         expect(predicates_for(abstract_model.send(:filter_scope, scope, 'string_enum_field' => {'1' => {v: 'm', o: 'default'}}))).to eq(predicates_for(scope.where(['(field_tests.string_enum_field IN (?))', 'm'])))
       end
-    end if ::Rails.version >= '4.1'
+    end
 
     it 'supports uuid type query' do
       uuid = SecureRandom.uuid

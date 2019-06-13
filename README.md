@@ -20,10 +20,18 @@ RailsAdmin is a Rails engine that provides an easy-to-use interface for managing
 
 ### [Action required] Security issue
 
-**RailsAdmin prior to 1.3.0 have been reported to have XSS vulnerability.** We strongly recommend that you upgrade RailsAdmin to 1.3.0 or later as soon as possible, if you are on those versions. See [#2985](https://github.com/sferik/rails_admin/issues/2985) for the detail.
+> **RailsAdmin prior to 1.3.0 have been reported to have XSS vulnerability.** We strongly recommend that you upgrade RailsAdmin to 1.3.0 or later as soon as possible, if you are on those versions. See [#2985](https://github.com/sferik/rails_admin/issues/2985) for the detail.
+> 
+> Also, 1.0.0 and 1.1.0 is known to have [CSRF vulnerability](https://github.com/sferik/rails_admin/commit/b13e879eb93b661204e9fb5e55f7afa4f397537a), too.
 
-Also, 1.0.0 and 1.1.0 is known to have [CSRF vulnerability](https://github.com/sferik/rails_admin/commit/b13e879eb93b661204e9fb5e55f7afa4f397537a), too.
+## Getting started
 
+* Check out [the docs][docs].
+* Try the [live demo][demo]. ([Source code][dummy_app])
+
+[demo]: http://rails-admin-tb.herokuapp.com/
+[dummy_app]: https://github.com/bbenezech/dummy_app
+[docs]: https://github.com/sferik/rails_admin/wiki
 
 ## Features
 * CRUD any data with ease
@@ -42,7 +50,7 @@ Also, 1.0.0 and 1.1.0 is known to have [CSRF vulnerability](https://github.com/s
 
 ## Installation
 
-1. On your gemfile: `gem 'rails_admin', '~> 1.3'`
+1. On your gemfile: `gem 'rails_admin', '~> 2.0.0.beta'`
 2. Run `bundle install`
 3. Run `rails g rails_admin:install`
 4. Provide a namespace for the routes when asked
@@ -72,15 +80,6 @@ end
 
 Details: [Models](https://github.com/sferik/rails_admin/wiki/Models), [Groups](https://github.com/sferik/rails_admin/wiki/Groups), [Fields](https://github.com/sferik/rails_admin/wiki/Fields)
 
-## Documentation
-https://github.com/sferik/rails_admin/wiki
-
-## Demo
-Take RailsAdmin for a [test drive][demo] with sample data. ([Source code.][dummy_app])
-
-[demo]: http://rails-admin-tb.herokuapp.com/
-[dummy_app]: https://github.com/bbenezech/dummy_app
-
 ## Support
 If you have a question, please check this README, the wiki, and the [list of
 known issues][troubleshoot].
@@ -97,13 +96,11 @@ If you think you found a bug in RailsAdmin, you can [submit an issue](https://gi
 ## Supported Ruby Versions
 This library aims to support and is [tested against][travis] the following Ruby implementations:
 
-* Ruby 2.1
 * Ruby 2.2
 * Ruby 2.3
 * Ruby 2.4
 * Ruby 2.5
-* [Rubinius][]
+* Ruby 2.6
 * [JRuby][]
 
-[rubinius]: http://rubinius.com
 [jruby]: http://jruby.org/

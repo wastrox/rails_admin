@@ -48,9 +48,12 @@ $(document).on 'rails_admin.dom_ready', (e, content) ->
     # fileupload
 
     content.find('[data-fileupload]').each ->
-      input = this
-      $(this).on 'click', ".delete input[type='checkbox']", ->
-        $(input).children('.toggle').toggle('slow')
+      parent = $(this).closest('.controls')
+      parent.find('.btn-remove-image').on 'click', ->
+        $(this).siblings('[type=checkbox]').click()
+        parent.find('.toggle').toggle('slow')
+        $(this).toggleClass('btn-danger btn-info')
+        false
 
     # fileupload-preview
 
@@ -69,6 +72,15 @@ $(document).on 'rails_admin.dom_ready', (e, content) ->
         image_container.show()
       else
         image_container.hide()
+
+    # multiple-fileupload
+
+    content.find('[data-multiple-fileupload]').each ->
+      $(this).closest('.controls').find('.btn-remove-image').on 'click', ->
+        $(this).siblings('[type=checkbox]').click()
+        $(this).parent('.toggle').toggle('slow')
+        $(this).toggleClass('btn-danger btn-info')
+        false
 
     # multiple-fileupload-preview
 
@@ -168,25 +180,13 @@ $(document).on 'rails_admin.dom_ready', (e, content) ->
       field = type_select.parents('.control-group').first()
       object_select = field.find('select').last()
       urls = type_select.data('urls')
+
       type_select.on 'change', (e) ->
-        if $(this).val() is ''
-          object_select.html('<option value=""></option>')
-        else
-          $.ajax
-            url: urls[type_select.val()]
-            data:
-              compact: true
-              all: true
-            beforeSend: (xhr) ->
-              xhr.setRequestHeader("Accept", "application/json")
-            success: (data, status, xhr) ->
-              html = $('<option></option>')
-              $(data).each (i, el) ->
-                option = $('<option></option>')
-                option.attr('value', el.id)
-                option.text(el.label)
-                html = html.add(option)
-              object_select.html(html)
+        selected_type = type_select.val().toLowerCase()
+        selected_data = $("##{selected_type}-js-options").data('options')
+        object_select.data('options', selected_data)
+        object_select.filteringSelect("destroy")
+        object_select.filteringSelect selected_data
 
 
     # simplemde
@@ -294,9 +294,9 @@ $(document).on 'rails_admin.dom_ready', (e, content) ->
             authenticity_token: $('meta[name=csrf-token]').attr('content')
 
         $(@).addClass('froala-wysiwyged')
-        $(@).editable(config_options)
+        $(@).froalaEditor(config_options)
         if uploadEnabled
-          $(@).on 'editable.imageError', (e, editor, error) ->
+          $(@).on 'froalaEditor.image.error', (e, editor, error) ->
             alert("error uploading image: " + error.message);
             # Custom error message returned from the server.
             if error.code == 0
@@ -326,7 +326,7 @@ $(document).on 'rails_admin.dom_ready', (e, content) ->
 
             return
 
-          .on('editable.afterRemoveImage', (e, editor, $img) ->
+          .on('froalaEditor.image.removed', (e, editor, $img) ->
             # Set the image source to the image delete params.
             editor.options.imageDeleteParams =
               src: $img.attr('src')
@@ -349,3 +349,11 @@ $(document).on 'rails_admin.dom_ready', (e, content) ->
           goFroalaWysiwygs(array)
       else
         goFroalaWysiwygs(array)
+
+    # action_text
+
+    content.find('trix-editor').each ->
+      if !window.Trix
+        options = $(this).data('options')
+        $('head').append('<link href="' + options['csspath'] + '" rel="stylesheet" media="all" type="text\/css">')
+        $.getScript options['jspath']

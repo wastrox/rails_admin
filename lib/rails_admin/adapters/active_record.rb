@@ -64,6 +64,10 @@ module RailsAdmin
         end
       end
 
+      def base_class
+        model.base_class
+      end
+
       delegate :primary_key, :table_name, to: :model, prefix: false
 
       def encoding
@@ -118,13 +122,17 @@ module RailsAdmin
       end
 
       def query_scope(scope, query, fields = config.list.fields.select(&:queryable?))
-        wb = WhereBuilder.new(scope)
-        fields.each do |field|
-          value = parse_field_value(field, query)
-          wb.add(field, value, field.search_operator)
+        if config.list.search_by
+          scope.send(config.list.search_by, query)
+        else
+          wb = WhereBuilder.new(scope)
+          fields.each do |field|
+            value = parse_field_value(field, query)
+            wb.add(field, value, field.search_operator)
+          end
+          # OR all query statements
+          wb.build
         end
-        # OR all query statements
-        wb.build
       end
 
       # filters example => {"string_field"=>{"0055"=>{"o"=>"like", "v"=>"test_value"}}, ...}

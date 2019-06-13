@@ -9,6 +9,8 @@ class FieldTest < ActiveRecord::Base
   attr_accessor :delete_paperclip_asset
   before_validation { self.paperclip_asset = nil if delete_paperclip_asset == '1' }
 
+  ActiveRecord::Base.extend Dragonfly::Model
+  ActiveRecord::Base.extend Dragonfly::Model::Validations
   dragonfly_accessor :dragonfly_asset
 
   mount_uploader :carrierwave_asset, CarrierwaveUploader
@@ -47,8 +49,11 @@ class FieldTest < ActiveRecord::Base
     end
   end
 
-  if ::Rails.version >= '4.1' # enum support was added in Rails 4.1
-    enum string_enum_field: {S: 's', M: 'm', L: 'l'}
-    enum integer_enum_field: [:small, :medium, :large]
-  end
+  include ShrineUploader.attachment(:shrine_asset)
+  include ShrineVersioningUploader.attachment(:shrine_versioning_asset)
+
+  has_rich_text :action_text_field if defined?(ActionText)
+
+  enum string_enum_field: {S: 's', M: 'm', L: 'l'}
+  enum integer_enum_field: [:small, :medium, :large]
 end
